@@ -3,9 +3,9 @@ from q_learning.q_table.QTableDicionarioPosicaoStep import QTableDicionarioPosic
 from q_learning.AcaoMario import AcaoMario
 from q_learning.q_table.QTableDicionarioState import QTableDicionarioState
 from q_learning.q_table.QTableInterface import QTableInterface
-import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
 from q_learning.q_table.QTableDicionarioIntervaloState import QTableDicionarioIntervaloState
+import imageio
+import numpy as np
 import os
 
 os.environ['TERM'] = 'xterm'
@@ -39,7 +39,7 @@ def recompensa_x(old_x, old_y, new_x, new_y, collision, info) -> int:
 
 
 def main():
-    nome_arquivo = "q_table_dicionario_state_continuacao.txt"
+    nome_arquivo = "q_table_dicionario_state.txt"
     q_table = QTableDicionarioPosicaoStep()
     q_table = QTableDicionarioState()
     # q_table = QTableDicionarioIntervaloState()
@@ -54,40 +54,22 @@ def main():
         # 'spin': 256,
         'spinright': 384
     }
-    for i in range(5):
-        acoes = [AcaoMario(descricao, codigo) for descricao, codigo in actions_map.items()]
-        carrega_arquivo_q_table(nome_arquivo, q_table, actions_map)
-        print(f"APOS CARREGAR A TABELA:\n{len(q_table.q_table)}")
-        q = QLearningMario("YoshiIsland1")
-        jogadas = 120
-        maximo_x, maximo_passo, play_mais_longe, play_mais_passos = q.treinar(
-            q_table, 0.7, 0.95, 0.3, jogadas, 3000, acoes, recompensa_x
-        )
 
-        print(f"Ao final, mario atingiu a posx: {maximo_x}, e o maximo de passos foram {maximo_passo}")
-        cabecalho = f"Nessa tabela, após {jogadas} tentativas, mario atingiu a posição maxima: {maximo_x}, com {maximo_passo} iterações"
+    acoes = [AcaoMario(descricao, codigo) for descricao, codigo in actions_map.items()]
+    carrega_arquivo_q_table(nome_arquivo, q_table, actions_map)
+    print(f"APOS CARREGAR A TABELA:\n{len(q_table.q_table)}")
+    q = QLearningMario("YoshiIsland1")
+    jogadas = 150
+    maximo_x, maximo_passo, play = q.treinar(
+        q_table, 0.7, 0.95, 0.8, jogadas, 3000, acoes, recompensa_x
+    )
+    imageio.mimsave("play.gif", [np.array(img) for i, img in enumerate(play)], fps=3)
+    print(f"Ao final, mario atingiu a posx: {maximo_x}, e o maximo de passos foram {maximo_passo}")
+    cabecalho = f"Nessa tabela, após {jogadas} tentativas, mario atingiu a posição maxima: {maximo_x}, com {maximo_passo} iterações"
 
-        salvar_q_table(q_table, nome_arquivo, cabecalho)
+    # salvar_q_table(q_table, nome_arquivo, cabecalho)
 
     return
-
-
-def reproduzir_frames(frames, fps=30):
-    fig, ax = plt.subplots()
-    img = ax.imshow(frames[0])  # Inicializa com o primeiro frame
-    ax.axis('off')  # Remove os eixos para parecer mais com o jogo
-
-    # Atualiza os frames da animação
-    def update(frame):
-        img.set_data(frame)
-        return [img]
-
-    # Calcula o intervalo entre frames com base no FPS
-    intervalo = int(1000 / fps)
-
-    # Animação
-    anim = FuncAnimation(fig, update, frames=frames, interval=intervalo, blit=True)
-    plt.show()
 
 
 def carrega_arquivo_q_table(nome_arquivo: str, q_table: QTableInterface, actions_map: dict) -> None:

@@ -38,7 +38,6 @@ class QTableDicionarioPosicaoStep(QTableInterface):
         chave = self.cria_chave(ram, step)
         if not self.estado_ja_existe(ram, step):
             raise ValueError(f"O estado {chave} não está na tabela Q.")
-
         self.q_table[chave][indice_acao].valor = valor
 
     def retorna_acoes_estado(self, ram, step) -> List[AcaoMario]:
