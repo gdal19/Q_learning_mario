@@ -21,7 +21,9 @@ class QLearningMario:
         maximo_passos = 0
         pos_x = 0
         for episode in range(n_episodes):
+            score_atual = 0
             play = []
+            escolhas = []
             print(f"Iniciando episódio {episode + 1}/{n_episodes}...")
             env.reset()
             img = env.render(mode='rgb_array')
@@ -57,14 +59,16 @@ class QLearningMario:
                 ram_novo_estado = self.getRam(env)
                 new_state, new_x, new_y = getState(ram_novo_estado, radius=radius)
                 collision = self.mario_esta_morto(ram_novo_estado)
+                escolhas.append({"state": q_table.cria_chave(ram, step), "acao": indice_acao})
 
                 if not self.mario_esta_no_chao(getState(ram_novo_estado, radius)[0], radius) and not collision:
                     info, collision = self.espera_mario_voltar_chao(env, radius)
                     ram_novo_estado = self.getRam(env)
-                    new_state, new_x, new_y = getState(ram_novo_estado, radius=radius)
+                    new_state, new_x, _ = getState(ram_novo_estado, radius=radius)
 
                 # Calcula recompensa
-                reward = compute_reward(x, y, new_x, new_y, collision, info)
+                reward = compute_reward(x, y, new_x, new_y, collision, info, score_atual)
+                score_atual = info["score"]
 
                 # Inicializa o novo estado na Q-Table, se necessário
                 if not q_table.estado_ja_existe(ram, step + 1):
@@ -81,7 +85,8 @@ class QLearningMario:
                 if collision:
                     print(f"Episódio {episode + 1}: Mario morreu em {step + 1} passos.")
                     print(f"A ultima ação antes de morrer foi {acoes[indice_acao]} recebeu a recompensa {reward}")
-                    print(f"A ultima linha da tabela ficou: {q_table.retorna_acoes_estado(ram, step)} em qtable[{step}][{q_table.cria_chave(ram, step)}]")
+                    print(
+                        f"A ultima linha da tabela ficou: {q_table.retorna_acoes_estado(ram, step)} em qtable[{step}][{q_table.cria_chave(ram, step)}]")
                     print(f"{100 * '#'}")
 
                     break
@@ -92,12 +97,17 @@ class QLearningMario:
                 if new_x >= 4900 or new_x == 0:
                     print(
                         f"Mario concluiu a fase com {step} iterações, após {episode} tentativas. posX é {new_x}; A tabela final é:")
+                    self.pontuar_linha_vencedora(q_table, escolhas)
                     env.close()
+
                     return pos_x, step, play
                 ram, state, x, y = ram_novo_estado, new_state, new_x, new_y
         env.close()
         return pos_x, step, play
 
+    def pontuar_linha_vencedora(self, q_table: QTableInterface, escolhas: List[dict]):
+        for escolha in escolhas:
+            q_table.q_table()[escolha['state']][escolha['acao']].valor = 50000
 
     def getStateMatrix(self, state, radius):
         state_n = np.reshape(state.split(','), (2 * radius + 1, 2 * radius + 1))

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from typing import List
+from typing import List, Dict
 
 from q_learning.AcaoMario import AcaoMario
 
@@ -8,7 +8,12 @@ from q_learning.AcaoMario import AcaoMario
 class QTableInterface(ABC):
 
     @abstractmethod
-    def q_table(self):
+    def cria_chave(self, ram, step):
+
+        pass
+
+    @abstractmethod
+    def q_table(self) -> Dict[str, List[AcaoMario]]:
         """Devolve a tabela Q."""
         pass
 
